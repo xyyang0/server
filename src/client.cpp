@@ -7,43 +7,34 @@
 #include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
+#include "../headers/Address.hpp"
+#include "../headers/TcpSocket.hpp"
+#define MAX_BUF 1024
 
-int main(){
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd < 0){
-        perror(strerror(errno));
+int main(int argc,char **argv){
+    if(argc < 3){
+        std::cerr << "./client [ip] [port]";
         exit(-1);
     }
+    TcpSocket clientSock;
+    Address servAddr(argv[1],argv[2]);
+    clientSock.connect(servAddr);
 
-    struct sockaddr_in addr;
-    bzero(&addr,sizeof(addr));
-    addr.sin_family = PF_INET;
-    addr.sin_port = htons(12345);
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    int ret;
-    ret = connect(sockfd,(struct sockaddr*)&addr,sizeof(addr));
-    if(ret < 0){
-        perror(strerror(errno));
-        exit(-1);
-    }
-
-    char buf[1024]{0};
+    char buf[MAX_BUF]{0};
     while(1){
         write(STDOUT_FILENO,"<in>",4);
-        ret = read(STDIN_FILENO,buf,1024);
+        int ret = read(STDIN_FILENO,buf,1024);
         if(ret < 0){
          perror(strerror(errno));
          exit(-1);           
         }else if(ret == 0){
             break;
         }else{
-            write(sockfd,buf,strlen(buf));
+            write(clientSock.getFd(),buf,strlen(buf));
         }
-        ret = read(sockfd,buf,1024);
+        ret = read(clientSock.getFd(),buf,1024);
         write(STDOUT_FILENO,"<out>",5);
         write(STDOUT_FILENO,buf,5);
         write(STDOUT_FILENO,"\n",strlen("\n"));
     }
-    close(sockfd);
 }

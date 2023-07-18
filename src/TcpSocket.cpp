@@ -1,37 +1,30 @@
-#include "ServerAddr.hpp"
+#include "../headers/TcpSocket.hpp"
 #include <sys/socket.h>
 #include <errno.h>
 #include <unistd.h>
-ServerAddr::ServerAddr(){
+TcpSocket::TcpSocket(){
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if(sockfd < 0){
         perror("socket:");
         exit(-1);
     }
 }
-void ServerAddr::bind()const{
-    struct sockaddr_in addr;
-    bzero(&addr,sizeof(addr));
-
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_family = PF_INET;
-    addr.sin_port = htons(12345);
-
-    int ret = ::bind(sockfd, (struct sockaddr*)&addr, sizeof(addr));
+void TcpSocket::bind(const Address &addr)const{
+    int ret = ::bind(sockfd, (struct sockaddr*)(&addr.addr), addr.len);
     if(ret < 0){
-        perror("listen:");
+        perror("bind:");
         exit(-1);
     }
 }
 
-void ServerAddr::listen()const{
+void TcpSocket::listen()const{
     if(::listen(sockfd,5) < 0){
         perror("listen:");
         exit(-1);
     }
 }
 
-int ServerAddr::accept()const{
+int TcpSocket::accept()const{
     struct sockaddr_in clientAddr;
     bzero(&clientAddr,sizeof(clientAddr));
     socklen_t len = sizeof(clientAddr);
@@ -41,9 +34,17 @@ int ServerAddr::accept()const{
     }
     return fd;
 }
-int ServerAddr::getFd()const{
+
+void TcpSocket::connect(const Address &addr){
+    int ret = ::connect(sockfd,(struct sockaddr*)(&addr.addr),addr.len);
+    if(ret < 0){
+       perror("connect:"); 
+    }
+}
+
+int TcpSocket::getFd()const{
     return sockfd;
 }
-ServerAddr::~ServerAddr(){
+TcpSocket::~TcpSocket(){
     close(sockfd);
 }

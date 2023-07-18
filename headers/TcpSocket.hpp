@@ -11,15 +11,16 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
-
-class ServerAddr{
+#include "Address.hpp"
+class TcpSocket{
 public:
-    ServerAddr();
-    ~ServerAddr();
+    TcpSocket();
+    ~TcpSocket();
 
-    void bind()const;
+    void bind(const Address &addr)const;
     void listen()const;
     int accept()const;
+    void connect(const Address &addr);
 
     int getFd()const;
 private:

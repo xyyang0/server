@@ -1,4 +1,4 @@
-#include "Epoll.hpp"
+#include "../headers/Epoll.hpp"
 #include <sys/epoll.h>
 Epoll::Epoll(){
     epollfd = epoll_create(256);
@@ -20,12 +20,12 @@ void Epoll::addFd(int fd,int flags){
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
 }
 
-void Epoll::eventLoop(const ServerAddr &servaddr){
+void Epoll::eventLoop(const TcpSocket &servSock){
     while(1){
         int nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
         for(int i = 0; i < nfds; i++){
-            if(events[i].data.fd == servaddr.getFd()){
-                int acceptfd = servaddr.accept();
+            if(events[i].data.fd == servSock.getFd()){
+                int acceptfd = servSock.accept();
                 if(acceptfd > 0){
                     setnonblock(acceptfd);
                     addFd(acceptfd, EPOLLIN | EPOLLET);
