@@ -7,9 +7,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/epoll.h>
-#include "../headers/Epoll.hpp"
-#include "../headers/Address.hpp"
-#include "../headers/TcpSocket.hpp"
+#include "./headers/Epoll.hpp"
+#include "./headers/Address.hpp"
+#include "./headers/TcpSocket.hpp"
 int main(int argc,char **argv){
     if(argc < 3){
         std::cerr << "./server [ip] [port]";

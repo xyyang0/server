@@ -39,6 +39,7 @@ void TcpSocket::connect(const Address &addr){
     int ret = ::connect(sockfd,(struct sockaddr*)(&addr.addr),addr.len);
     if(ret < 0){
        perror("connect:"); 
+       exit(-1);
     }
 }
 
