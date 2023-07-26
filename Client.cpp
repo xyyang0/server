@@ -1,14 +1,15 @@
 #include <cstdio>
 #include <iostream>
 #include <netinet/in.h>
+#include <strings.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
-#include "../headers/Address.hpp"
-#include "../headers/TcpSocket.hpp"
+#include "./headers/Address.hpp"
+#include "./headers/TcpSocket.hpp"
 #define MAX_BUF 1024
 
 int main(int argc,char **argv){
@@ -24,17 +25,13 @@ int main(int argc,char **argv){
     while(1){
         write(STDOUT_FILENO,"<in>",4);
         int ret = read(STDIN_FILENO,buf,1024);
-        if(ret < 0){
-         perror(strerror(errno));
-         exit(-1);           
-        }else if(ret == 0){
+        if(ret == 0){
             break;
-        }else{
-            write(clientSock.getFd(),buf,strlen(buf));
+        }else if(ret > 0){
+            write(clientSock.getFd(),buf,ret);
+            write(STDOUT_FILENO,"<out>",5);
+            ret = read(clientSock.getFd(), buf, MAX_BUF);
+            write(STDOUT_FILENO, buf, ret);
         }
-        ret = read(clientSock.getFd(),buf,1024);
-        write(STDOUT_FILENO,"<out>",5);
-        write(STDOUT_FILENO,buf,5);
-        write(STDOUT_FILENO,"\n",strlen("\n"));
     }
 }

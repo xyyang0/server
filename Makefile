@@ -1,23 +1,18 @@
-BUILD=./build/
-SRC=./src/
-HEADER=./headers/
-$(BUILD)server:$(SRC)Server.cpp \
-			   $(SRC)TcpSocket.cpp \
-			   $(HEADER)TcpSocket.hpp \
-			   $(HEADER)Epoll.hpp \
-			   $(SRC)Epoll.cpp \
-			   $(SRC)Util.cpp \
-			   $(HEADER)Util.hpp \
-			   $(SRC)Address.cpp\
-			   $(HEADER)Address.hpp
-	g++ $(SRC)Server.cpp $(SRC)TcpSocket.cpp $(SRC)Address.cpp \
-	    $(SRC)Epoll.cpp $(SRC)Util.cpp -o $(BUILD)server
-$(BUILD)client:$(SRC)client.cpp \
+BUILD = ./build/
+SRC = ./src/
+HEADER = ./headers/
+CPPS = $(wildcard ./src/*.cpp)
+HEADERS = $(wildcard ./headers/*.hpp)
+
+$(BUILD)server: Server.cpp $(CPPS) $(HEADERS)
+	g++ Server.cpp $(CPPS) -o $(BUILD)server
+
+$(BUILD)client:Client.cpp\
 			   $(SRC)Address.cpp\
 			   $(HEADER)Address.hpp \
 			   $(SRC)TcpSocket.cpp \
 			   $(HEADER)TcpSocket.hpp
-	g++ $(SRC)client.cpp $(SRC)Address.cpp $(SRC)TcpSocket.cpp -o $(BUILD)client
+	g++ Client.cpp $(SRC)Address.cpp $(SRC)TcpSocket.cpp -o $(BUILD)client
 build:$(BUILD)server $(BUILD)client
 clean:
 	rm $(BUILD)client $(BUILD)server
