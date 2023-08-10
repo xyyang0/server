@@ -2,10 +2,13 @@
 #define EPOLL_H_
 
 #include <iostream>
+#include <list>
 #include <unistd.h>
 #include <sys/epoll.h>
 #include "Util.hpp"
 #include "TcpSocket.hpp"
+#include "threadpool.hpp"
+#include "http.hpp"
 class Epoll{
 public:
     Epoll();
@@ -18,6 +21,6 @@ private:
     int epollfd;
     struct epoll_event events[MAX_EVENTS];
 
-    void readWriteEvents(int clinetfd);
+    ThreadPool thPool;
 };
 #endif
