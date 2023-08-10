@@ -15,7 +15,7 @@ ThreadPool::ThreadPool(int num):threads(num){
                         return stop || !tasks.empty();
                     });
                     if(stop && tasks.empty()) return;
-                    task = std::move(tasks.front());
+                    task = tasks.front();
                     tasks.pop();
                 }
                 task();
