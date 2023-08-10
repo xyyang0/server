@@ -1,7 +1,6 @@
-#ifndef UTIL_H_
-#define UTIL_H_
+#pragma once
 #include <sys/fcntl.h>
-
+#include <string>
+#include <vector>
 void setnonblock(int fd);
-
-#endif
+std::vector<std::string> split(const std::string &str,const std::string &token);

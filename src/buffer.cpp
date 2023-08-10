@@ -13,3 +13,6 @@ int Buffer::size(){
  const char *Buffer::getbuf(){
     return buffer.c_str();
  }
+ void Buffer::clear(){
+   buffer.clear();
+ }
