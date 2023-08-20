@@ -1,5 +1,6 @@
 #include "../headers/Util.hpp"
 #include <sys/fcntl.h>
+#include <string.h>
 void setnonblock(int fd){
     int flags = fcntl(fd,F_GETFL,0);
     flags |= O_NONBLOCK;
@@ -22,4 +23,12 @@ std::vector<std::string> split(const std::string &str,const std::string& token){
    }
    res.push_back( str.substr(i,str.size()-1) );
    return res;
+}
+
+void addSig(int sig, void (*handler)(int)){
+   struct sigaction sa;
+   bzero(&sa,sizeof(sa));
+   sa.sa_handler = handler;
+   sigfillset(&sa.sa_mask);
+   sigaction(sig,&sa,nullptr);
 }
