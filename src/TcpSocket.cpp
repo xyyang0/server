@@ -9,8 +9,8 @@ TcpSocket::TcpSocket(){
         exit(-1);
     }
 }
-void TcpSocket::bind(const Address &addr)const{
-    int ret = ::bind(sockfd, (struct sockaddr*)(&addr.addr), addr.len);
+void TcpSocket::bind(const Address *addr)const{
+    int ret = ::bind(sockfd, (struct sockaddr*)(&addr->addr), addr->len);
     if(ret < 0){
         perror("bind:");
         exit(-1);
@@ -35,12 +35,8 @@ int TcpSocket::accept()const{
     return fd;
 }
 
-void TcpSocket::connect(const Address &addr){
-    int ret = ::connect(sockfd,(struct sockaddr*)(&addr.addr),addr.len);
-    if(ret < 0){
-       perror("connect:"); 
-       exit(-1);
-    }
+int TcpSocket::connect(Address *addr){
+    return ::connect(sockfd,(struct sockaddr*)(&addr->addr),addr->len);
 }
 
 int TcpSocket::getFd()const{

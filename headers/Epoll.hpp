@@ -8,19 +8,19 @@
 #include "Util.hpp"
 #include "TcpSocket.hpp"
 #include "threadpool.hpp"
-#include "http.hpp"
+#include <vector>
 class Epoll{
 public:
     Epoll();
     ~Epoll();
     void addFd(int fd,int flags);
-    void eventLoop(const TcpSocket &servSock);
+    void modfd(int fd,int flags);
+    int getEpollFd();
+    std::vector<epoll_event> eventLoop();
 private:
     enum { MAX_EVENTS = 1024 };
     enum { MAX_BUF = 256 };
     int epollfd;
     struct epoll_event events[MAX_EVENTS];
-
-    ThreadPool thPool;
 };
 #endif

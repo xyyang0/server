@@ -12,15 +12,16 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include "Address.hpp"
+#include <memory>
 class TcpSocket{
 public:
     TcpSocket();
     ~TcpSocket();
 
-    void bind(const Address &addr)const;
+    void bind(const Address *addr)const;
     void listen()const;
     int accept()const;
-    void connect(const Address &addr);
+    int connect(Address *addr);
 
     int getFd()const;
 private:
