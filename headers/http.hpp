@@ -5,18 +5,18 @@
 #include <sys/mman.h>
 #include <sys/uio.h>
 #include "buffer.hpp"
+#include "timer.hpp"
 #include "Util.hpp"
 #include <iostream>
 #include <set>
 class http{
 public:
     http(int fd):clientfd(fd){}
-    ~http(){}
+    ~http(){ close(clientfd); }
 
     int readn();
     int writen();
 
-    void process_routine();
     void process_request();
     void process_response();
 
@@ -35,12 +35,12 @@ public:
 
     void process_write();
 
-    static inline std::set<http*> httpConns;
-    void closeConn(http *);
-    bool connState();
-    void setFd(int fd);
     int getFd();
     void reset();
+
+    static void httpProcessRead(timer *);
+    static void httpProcessWrite(timer *);
+    static void timerCallback(timer *t);
 private:
     enum class http_method { GET,POST } ;
     enum class http_state { OK = 200,BAD_REQUEST = 404 };

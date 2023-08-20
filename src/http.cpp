@@ -1,4 +1,5 @@
 #include "../headers/http.hpp"
+#include <thread>
 #include <vector>
 #include <cstring>
 #include <sys/types.h>
@@ -24,19 +25,33 @@ int http::readn(){
 }
 
 
-void http::process_routine(){
-    if(readn() == 0){
-        closeConn(this);
-        return;
-    }
+void http::httpProcessRead(timer *t){
     try{
-        process_request();
-        process_response();
+        t->hptr->readn();
+        if(t->hptr->readBuf.size() == 0){
+            close(t->hptr->getFd());
+            return;
+        }
+        t->hptr->process_request();
+        t->Ep->modfd(t->hptr->getFd(),EPOLLET | EPOLLOUT | EPOLLONESHOT);
     }catch(const char *err){
         std::cerr << err << std::endl;
-        close(clientfd);
-        reset();
+        t->hptr->reset();
     }
+}
+void http::httpProcessWrite(timer *t){
+    t->hptr->process_response();
+    t->hptr->reset();
+    if(!t->hptr->keep_alive){
+        close(t->hptr->getFd());
+        return;
+    }
+    t->Ep->modfd(t->hptr->getFd(),EPOLLET | EPOLLIN | EPOLLONESHOT);
+}
+
+void http::timerCallback(timer *t){
+    if(t->hptr)
+        delete t->hptr;
 }
 
 void http::process_request(){
@@ -191,29 +206,10 @@ void http::process_write(){
 
 void http::process_response(){
     if(check_file() < 0){
-        closeConn(this);
+        return;
     }
     add_response();
     process_write();
-    if(!keep_alive){
-        closeConn(this);
-    }
-    reset();
-}
-
-
-void http::closeConn(http *ht){
-    close(ht->clientfd);
-    clientfd = -1;
-    ht->reset();
-}
-
-bool http::connState(){
-    return keep_alive;
-}
-
-void http::setFd(int fd){
-    clientfd = fd;
 }
 
 int http::getFd(){
