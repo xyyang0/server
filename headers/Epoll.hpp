@@ -11,13 +11,14 @@
 #include <vector>
 class Epoll{
 public:
-    Epoll();
-    ~Epoll();
     void addFd(int fd,int flags);
     void modfd(int fd,int flags);
     int getEpollFd();
-    std::vector<epoll_event> eventLoop();
+    std::vector<epoll_event> poll();
+    static Epoll* getInstance();
 private:
+    Epoll();
+    ~Epoll();
     enum { MAX_EVENTS = 1024 };
     enum { MAX_BUF = 256 };
     int epollfd;

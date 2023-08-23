@@ -7,12 +7,15 @@
 #include "buffer.hpp"
 #include "timer.hpp"
 #include "Util.hpp"
+#include "objectPool.hpp"
+#include "timer.hpp"
+#include "Epoll.hpp"
 #include <iostream>
 #include <set>
 class http{
 public:
-    http(int fd):clientfd(fd){}
-    ~http(){ close(clientfd); }
+    http()=default;
+    ~http()=default;
 
     int readn();
     int writen();
@@ -36,11 +39,15 @@ public:
     void process_write();
 
     int getFd();
+    void setHttp(timer *tp,Epoll *p,int fd);
     void reset();
+    void httpClose();
 
-    static void httpProcessRead(timer *);
-    static void httpProcessWrite(timer *);
-    static void timerCallback(timer *t);
+    static void httpProcessRead(Object<http> *);
+    static void httpProcessWrite(Object<http> *);
+
+    timer *t{nullptr};
+    Epoll *Ep{nullptr};
 private:
     enum class http_method { GET,POST } ;
     enum class http_state { OK = 200,BAD_REQUEST = 404 };

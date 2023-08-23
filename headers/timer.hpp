@@ -6,8 +6,8 @@
 
 class http;
 struct timer{
-    timer(uint64_t expire,http *h,Epoll *ep):m_expire(expire),hptr(h),Ep(ep){}
-    ~timer(){};
+    timer(uint64_t expire,http *ptr):m_expire(expire),h(ptr){}
+    ~timer()=default;
 
     template <typename F,typename ...Args>
     void callback(F &&f,Args&& ...args){
@@ -15,6 +15,6 @@ struct timer{
     }
     std::function<void()> func;
     uint64_t m_expire;
-    http *hptr;
-    Epoll *Ep;
+    http *h{nullptr};
+    bool keep_alive{true};
 };

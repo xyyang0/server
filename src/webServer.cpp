@@ -2,9 +2,10 @@
 webServer::webServer(const std::string& ip,const std::string& port):
     servSock(new TcpSocket{}),
     servAddr(new Address{ip,port}),
-    Ep(new Epoll),
+    Ep(Epoll::getInstance()),
     thPool(new ThreadPool),
-    tManager(timerManager::getInstance())
+    tManager(timerManager::getInstance()),
+    httpPool(new ObjectPool<http>{})
 {
 
 }
@@ -12,8 +13,8 @@ webServer::webServer(const std::string& ip,const std::string& port):
 webServer::~webServer(){
     delete servSock;
     delete servAddr;
-    delete Ep;
     delete thPool;
+    delete httpPool;
 }
 
 void webServer::launch(){
@@ -26,6 +27,7 @@ void webServer::init(){
     addSig(SIGALRM,webServer::sigReceiver);    
     addSig(SIGINT,webServer::sigReceiver);    
     addSig(SIGTERM,webServer::sigReceiver);    
+    addSig(SIGUSR1,webServer::sigReceiver);    
 
     Ep->addFd(servSock->getFd(),EPOLLIN);
     
@@ -55,63 +57,72 @@ void webServer::listen(){
     servSock->listen();
 }
 
+void timerCallback(timer *t){
+    t->h->httpClose();
+}
+
+uint64_t webServer::expireTime(){
+    return timerManager::time_ms()+timerSlot*2000;/*当前时间10s后到期*/
+}
+void webServer::insertNewTimer(int fd){
+    auto ptr = httpPool->seekFree();
+    if(ptr != nullptr){
+        http *h = ptr->object;
+        timer *t = new timer{expireTime(),h};
+        t->callback(timerCallback, t);
+        h->setHttp(t,Ep,fd);
+        tManager->insert(t);
+        objs[fd] = ptr;
+    }
+}
 void webServer::newConnection(){
     int acceptfd = servSock->accept();
     if(acceptfd > 0){
         setnonblock(acceptfd);
         Ep->addFd(acceptfd, EPOLLIN | EPOLLET | EPOLLONESHOT);
-
-        http *ht = new http{acceptfd};
-        uint64_t expire = timerManager::time_ms()+timerSlot*2000;
-        timer *t = new timer{expire,ht,Ep};
-        t->callback(http::timerCallback,t);
-        tManager->insert(t);
-        timers[acceptfd] = t;
+        insertNewTimer(acceptfd);
     }
 }
 
-void webServer::readEvent(int fd){
-    timer *t = whichTimer(fd);
-    if(t != nullptr && t->hptr != nullptr){
-        t->m_expire += timerSlot*1000;
-        tManager->delay(t);
-        thPool->addTask(http::httpProcessRead,t);
-    }
-}
-
-timer *webServer::whichTimer(int fd){
-    auto it = timers.find(fd);
-    if(it != timers.end()){
+Object<http> *webServer::whichObject(int fd){
+    auto it = objs.find(fd);
+    if(it != objs.end()){
         return it->second;
     }
     return nullptr;
 }
-void webServer::writeEvent(int fd){
-    timer *t = whichTimer(fd);
-    if(t != nullptr && t->hptr != nullptr){
-        t->m_expire += timerSlot*1000;
-        tManager->delay(t);
-        thPool->addTask(http::httpProcessWrite,t);
+
+void webServer::readWriteEvent(int fd,int type){
+    Object<http> *obj = whichObject(fd);
+    if(obj != nullptr){
+        http *h = obj->object;
+        h->t->m_expire += timerSlot*2000;
+        tManager->delay(h->t);
+        if(type == 0){          /*读事件*/
+            thPool->addTask(http::httpProcessRead,obj);
+        }else{                  /*写事件*/
+            thPool->addTask(http::httpProcessWrite,obj);
+        }
     }
 }
-
 void webServer::eventLoop(){
+    int listenfd = servSock->getFd();
     while(!stop){
-        std::vector<epoll_event> pollEvents = Ep->eventLoop();
-        int listenfd = servSock->getFd();
+        std::vector<epoll_event> pollEvents = Ep->poll();
         for(const auto &event : pollEvents){
             if(event.data.fd == listenfd){ /*新用户连接*/
                 newConnection();
             }else if(event.events & EPOLLIN){ /*读事件*/
-                readEvent(event.data.fd);
+                readWriteEvent(event.data.fd,0);
             }else if(event.events & EPOLLOUT){ /*写事件*/
-                writeEvent(event.data.fd);
+                readWriteEvent(event.data.fd,1);
             }else{
                 std::cerr << strerror(errno) << std::endl;
                 break;
             }
         }
         sigHandler(this);
+        tManager->removeNotAliveTimer();
     }
 }
 

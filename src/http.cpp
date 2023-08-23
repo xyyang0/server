@@ -8,6 +8,20 @@
 #include <sys/mman.h>
 #include <iostream>
 #define BUFSIZE 1024
+void http::setHttp(timer *tp, Epoll *p,int fd){
+    clientfd = fd;
+    t = tp;
+    Ep = p;
+}
+
+void http::httpClose(){
+    close(clientfd);
+    t->h = nullptr;
+    t->keep_alive = false;
+    t = nullptr;
+    Ep = nullptr;
+    reset();
+}
 int http::readn(){
    while(1){
         char buf[BUFSIZE]{'\0'};
@@ -25,34 +39,33 @@ int http::readn(){
 }
 
 
-void http::httpProcessRead(timer *t){
+void http::httpProcessRead(Object<http>* ptr){
+    http *h = ptr->object;
     try{
-        t->hptr->readn();
-        if(t->hptr->readBuf.size() == 0){
-            close(t->hptr->getFd());
+        if(h->readn() == 0){
+            h->httpClose();
+            ptr->active = false;
             return;
         }
-        t->hptr->process_request();
-        t->Ep->modfd(t->hptr->getFd(),EPOLLET | EPOLLOUT | EPOLLONESHOT);
+        h->process_request();
+        h->Ep->modfd(h->getFd(),EPOLLET | EPOLLOUT | EPOLLONESHOT);
     }catch(const char *err){
         std::cerr << err << std::endl;
-        t->hptr->reset();
+        h->reset();
     }
 }
-void http::httpProcessWrite(timer *t){
-    t->hptr->process_response();
-    t->hptr->reset();
-    if(!t->hptr->keep_alive){
-        close(t->hptr->getFd());
+void http::httpProcessWrite(Object<http> *ptr){
+    http *h = ptr->object;
+    h->process_response();
+    if(!h->keep_alive){
+        h->httpClose();
+        ptr->active = false;
         return;
     }
-    t->Ep->modfd(t->hptr->getFd(),EPOLLET | EPOLLIN | EPOLLONESHOT);
+    h->reset();
+    h->Ep->modfd(h->getFd(),EPOLLET | EPOLLIN | EPOLLONESHOT);
 }
 
-void http::timerCallback(timer *t){
-    if(t->hptr)
-        delete t->hptr;
-}
 
 void http::process_request(){
     std::vector<std::string> inputStrs = split(readBuf.getbuf(),"\r\n"); 
@@ -95,6 +108,8 @@ void http::parse_request_header(const std::vector<std::string> &inputStrs){
         else if(s.find("Connection:") != std::string::npos){
             if(s.find("keep-alive") != std::string::npos){
                 keep_alive = true;
+            }else{
+                keep_alive = false;
             }
         }else if(s.find("Content-length:") != std::string::npos){
             int pos = strlen("Content-length:");

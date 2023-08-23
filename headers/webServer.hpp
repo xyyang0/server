@@ -6,6 +6,7 @@
 #include "timer.hpp"
 #include "Util.hpp"
 #include "http.hpp"
+#include "objectPool.hpp"
 #include "timerHeap.hpp"
 
 #include <memory>
@@ -26,10 +27,13 @@ private:
     void eventLoop();
 
     void newConnection();
-    void readEvent(int fd);
-    void writeEvent(int fd);
+    void insertNewTimer(int fd);
+    void removeNotAliveTimer();
+    uint64_t expireTime();
+
+    void readWriteEvent(int fd,int type);
     void tick();
-    timer *whichTimer(int fd);
+    Object<http> *whichObject(int fd);
 
     static void sigHandler(webServer *w);
     static void sigReceiver(int sig);
@@ -40,7 +44,9 @@ private:
     Epoll* Ep;
     ThreadPool* thPool;
     timerManager *tManager;
-    std::map<int,timer *> timers;
+    ObjectPool<http> *httpPool;
+private:
+    std::map<int,Object<http>*> objs;
     bool stop{false};
     int timerSlot{5};
 };

@@ -62,7 +62,15 @@ void timerManager::delay(timer *t){
     throw "unkonwn timer";
 }
 
-
+void timerManager::removeNotAliveTimer(){
+    for(int i = 1; i < timerArr.size();){
+        if(!timerArr[i]->keep_alive){
+            remove(i-1);
+        }else{
+            i++;
+        }
+    }
+}
 void timerManager::buildHeap(){
     if(!empty()){
         for(int i = timerArr.size()/2; i >= 1; i--){
