@@ -13,7 +13,7 @@
 *****************************************************************
 
 **<font size=4>Demo演示</font>**
-~[压力测试](https://github.com/xyyang0/server/blob/main/res/webbench.jpg)
+![压力测试](https://github.com/xyyang0/server/blob/main/res/webbench.jpg)
 
 *****************************************************************
 
