@@ -8,10 +8,9 @@
 #include <sys/mman.h>
 #include <iostream>
 #define BUFSIZE 1024
-void http::setHttp(timer *tp, Epoll *p,int fd){
+void http::setHttp(timer *tp,int fd){
     clientfd = fd;
     t = tp;
-    Ep = p;
 }
 
 void http::httpClose(){
@@ -19,7 +18,6 @@ void http::httpClose(){
     t->h = nullptr;
     t->keep_alive = false;
     t = nullptr;
-    Ep = nullptr;
     reset();
 }
 int http::readn(){
@@ -48,7 +46,7 @@ void http::httpProcessRead(Object<http>* ptr){
             return;
         }
         h->process_request();
-        h->Ep->modfd(h->getFd(),EPOLLET | EPOLLOUT | EPOLLONESHOT);
+        Epoll::getInstance()->modfd(h->getFd(),EPOLLET | EPOLLOUT | EPOLLONESHOT);
     }catch(const char *err){
         std::cerr << err << std::endl;
         h->reset();
@@ -63,7 +61,7 @@ void http::httpProcessWrite(Object<http> *ptr){
         return;
     }
     h->reset();
-    h->Ep->modfd(h->getFd(),EPOLLET | EPOLLIN | EPOLLONESHOT);
+    Epoll::getInstance()->modfd(h->getFd(),EPOLLET | EPOLLIN | EPOLLONESHOT);
 }
 
 

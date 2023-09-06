@@ -8,6 +8,7 @@
 #include "http.hpp"
 #include "objectPool.hpp"
 #include "timerHeap.hpp"
+#include "log.h"
 
 #include <memory>
 #include <iostream>
@@ -41,7 +42,7 @@ private:
 private:
     TcpSocket* servSock;
     Address* servAddr;
-    Epoll* Ep;
+    Epoll *Ep;
     ThreadPool* thPool;
     timerManager *tManager;
     ObjectPool<http> *httpPool;

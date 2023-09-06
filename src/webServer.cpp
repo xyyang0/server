@@ -2,12 +2,11 @@
 webServer::webServer(const std::string& ip,const std::string& port):
     servSock(new TcpSocket{}),
     servAddr(new Address{ip,port}),
-    Ep(Epoll::getInstance()),
     thPool(new ThreadPool),
-    tManager(timerManager::getInstance()),
     httpPool(new ObjectPool<http>{})
 {
-
+    Ep = Epoll::getInstance();
+    tManager = timerManager::getInstance();
 }
 
 webServer::~webServer(){
@@ -70,7 +69,7 @@ void webServer::insertNewTimer(int fd){
         http *h = ptr->object;
         timer *t = new timer{expireTime(),h};
         t->callback(timerCallback, t);
-        h->setHttp(t,Ep,fd);
+        h->setHttp(t,fd);
         tManager->insert(t);
         objs[fd] = ptr;
     }
