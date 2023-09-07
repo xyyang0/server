@@ -1,4 +1,5 @@
 #include "../headers/webServer.hpp"
+#include <sys/socket.h>
 webServer::webServer(const std::string& ip,const std::string& port):
     servSock(new TcpSocket{}),
     servAddr(new Address{ip,port}),
@@ -75,11 +76,16 @@ void webServer::insertNewTimer(int fd){
     }
 }
 void webServer::newConnection(){
-    int acceptfd = servSock->accept();
+    auto [acceptfd,addr] = servSock->accept();
     if(acceptfd > 0){
         setnonblock(acceptfd);
         Ep->addFd(acceptfd, EPOLLIN | EPOLLET | EPOLLONESHOT);
         insertNewTimer(acceptfd);
+
+        char buf[32]{0};
+        log::instance()->debug_log("new client comes -> ip:%s,port:%s",
+                                    addr.get_ip().c_str(),
+                                    addr.get_port().c_str());
     }
 }
 

@@ -73,7 +73,6 @@ std::string log::logMsg(const std::string& levelStr,const std::string& fmt,Args 
 
     std::string msg(buf);
     msg += "\n";
-    std::cout << buf <<std::endl;
     return msg;
 }
 
@@ -106,7 +105,7 @@ void log::fatal_log(const std::string& fmt,Args &&...args){
 
 template <typename ...Args>
 void log::write_(const std::string& levelStr,const std::string& fmt,Args&& ...args){
-    if(check_args(fmt,sizeof...(args))){
+    if(check_args(fmt,sizeof...(args)) && openLog == 1){
         std::string msg = logMsg(levelStr,fmt,std::forward<Args>(args)...);
         write_in(msg);
     }

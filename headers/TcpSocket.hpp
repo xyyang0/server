@@ -20,7 +20,7 @@ public:
 
     void bind(const Address *addr)const;
     void listen()const;
-    int accept()const;
+    std::tuple<int,Address> accept()const;
     int connect(Address *addr);
 
     int getFd()const;

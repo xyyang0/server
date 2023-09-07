@@ -8,7 +8,7 @@ int parse_options(int argc,char **argv){
     int open_log = 0;
     if(argc == 2){
         help();
-        return -1;
+        exit(0);
     }
     if(argc == 3){
         if(strcmp(argv[1],"-l") == 0){
