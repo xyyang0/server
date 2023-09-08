@@ -117,6 +117,9 @@ void http::parse_request_header(const std::vector<std::string> &inputStrs){
     }
 }
 void http::parse_content(const std::vector<std::string> &inputStrs){
+    if(current_line < inputStrs.size()){
+        http_contents = inputStrs[current_line];
+    }
 }
 
 int http::check_file(){

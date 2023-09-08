@@ -59,6 +59,7 @@ private:
     http_method method;
     http_state state;
     std::string content_type;
+    std::string http_contents;
 
     unsigned int content_length{0};
     bool keep_alive{false};
